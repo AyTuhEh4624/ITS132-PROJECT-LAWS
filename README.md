@@ -29,6 +29,9 @@ if you're adding more files to handle database, make sure to integrate in server
 `mern/client/src`
 frontend stuff, should be self-explanatory
 
+`mern/client/index.html`
+main index page html, change tab title and logo here
+
 ## How To Run
 Create the file `mern/server/config.env` with your Atlas URI and the server port:
 fill in `<username>` and `<password>`
