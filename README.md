@@ -19,7 +19,7 @@ npm install
 ```
 ## How To Run
 Create the file `mern/server/config.env` with your Atlas URI and the server port:
-fill in <username> and <password>
+fill in `<username>` and `<password>`
 ```
 ATLAS_URI=mongodb+srv://<username>:<password>@learningcluster.mofbttf.mongodb.net/employees?retryWrites=true&w=majority 
 PORT=5050
