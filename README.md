@@ -2,7 +2,7 @@
 use vs-code to edit
 
 # first time setup as a dev 
-open terminal
+open vs-code terminal (crtl+`)
 ```
 cd mern/server
 npm install mongodb express cors
