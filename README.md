@@ -17,6 +17,18 @@ choose typescript
 ```
 npm install
 ```
+
+
+## How to Edit
+mern/server/routes
+database handling files
+
+mern/server/server.js
+if you're adding more files to handle database, make sure to integrate in server.js
+
+mern/client/src
+frontend stuff, should be self-explanatory
+
 ## How To Run
 Create the file `mern/server/config.env` with your Atlas URI and the server port:
 fill in `<username>` and `<password>`
@@ -36,3 +48,4 @@ Start Web server
 cd mern/client
 npm run dev
 ```
+
