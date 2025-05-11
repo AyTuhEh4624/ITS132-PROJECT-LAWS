@@ -20,13 +20,13 @@ npm install
 
 
 ## How to Edit
-mern/server/routes
+`mern/server/routes`
 database handling files
 
-mern/server/server.js
+`mern/server/server.js`
 if you're adding more files to handle database, make sure to integrate in server.js
 
-mern/client/src
+`mern/client/src`
 frontend stuff, should be self-explanatory
 
 ## How To Run
