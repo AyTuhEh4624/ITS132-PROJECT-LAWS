@@ -1,29 +1,38 @@
-# mern-stack-example
-Mern Stack code for the [Mern Tutorial](https://www.mongodb.com/languages/mern-stack-tutorial)
+# ITS132-PROJECT-LAW$
+use vs-code to edit
 
-[![CI](https://github.com/mongodb-developer/mern-stack-example/actions/workflows/main.yaml/badge.svg)](https://github.com/mongodb-developer/mern-stack-example/actions/workflows/main.yaml)
-
+# first time setup as a dev 
+open terminal
+```
+cd mern/server
+npm install mongodb express cors
+```
+open a second terminal
+```
+cd mern/client
+npm create vite@latest client – –template react
+```
+choose react
+choose typescript
+```
+npm install
+```
 ## How To Run
 Create the file `mern/server/config.env` with your Atlas URI and the server port:
+fill in <username> and <password>
 ```
-ATLAS_URI=mongodb+srv://<username>:<password>@sandbox.jadwj.mongodb.net/
+ATLAS_URI=mongodb+srv://<username>:<password>@learningcluster.mofbttf.mongodb.net/employees?retryWrites=true&w=majority 
 PORT=5050
 ```
 
 Start server:
 ```
 cd mern/server
-npm install
-npm start
+node --env-file=config.env server
 ```
 
 Start Web server
 ```
 cd mern/client
-npm install
 npm run dev
 ```
-
-## Disclaimer
-
-Use at your own risk; not a supported MongoDB product
