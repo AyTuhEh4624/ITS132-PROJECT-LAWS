@@ -2,9 +2,9 @@
 use vs-code to edit
 
 # first time setup as a dev 
-download node v20.11.0
-
+download node v20.11.0 
 https://nodejs.org/download/release/v20.11.0/node-v20.11.0-x64.msi
+
 open vs-code terminal (crtl+`)
 ```
 cd mern/server
