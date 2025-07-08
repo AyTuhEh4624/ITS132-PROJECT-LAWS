@@ -1,2 +1,17 @@
 node_modules/
 config.env
+mern/server/package.json
+mern/server/package-lock.json
+mern/client/client/vite.config.ts
+mern/client/client/tsconfig.node.json
+mern/client/client/tsconfig.json
+mern/client/client/tsconfig.app.json
+mern/client/client/src/vite-env.d.ts
+mern/client/client/src/main.tsx
+mern/client/client/src/index.css
+mern/client/client/src/App.tsx
+mern/client/client/src/App.css
+mern/client/client/README.md
+mern/client/client/package.json
+mern/client/client/index.html
+mern/client/client/eslint.config.js
