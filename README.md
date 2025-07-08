@@ -13,7 +13,7 @@ npm install mongodb express cors
 open a second terminal
 ```
 cd mern/client
-npm create vite@latest client – –template react
+npm create vite@latest client ––template react
 npm install recharts
 ```
 choose react

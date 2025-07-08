@@ -18,13 +18,16 @@ export default function ProductAnalyticsDashboard() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const recordsPerPage = 500;
-
+  const [selectedCategories, setSelectedCategories] = useState([]);
+  const [allCategories, setAllCategories] = useState([]);
+  
   useEffect(() => {
     const fetchAnalytics = async () => {
       try {
         const res = await fetch('http://localhost:5050/record/analytics');
         const data = await res.json();
         setAnalytics(data);
+        setAllCategories(data.categories);
       } catch (err) {
         console.error("Failed to fetch analytics", err);
       } finally {
@@ -53,6 +56,10 @@ export default function ProductAnalyticsDashboard() {
     fetchRecords();
   }, [currentPage]);
 
+  const handleCategorySelection = (selected) => {
+    setSelectedCategories(selected);
+  };
+
   const deleteRecord = async (_id) => {
     try {
       await fetch(`http://localhost:5050/record/${_id}`, { method: "DELETE" });
@@ -78,6 +85,11 @@ export default function ProductAnalyticsDashboard() {
     }
   };
 
+  // Filtered data based on selected categories
+  const filteredSalesByCategory = analytics?.salesByCategory.filter((item) => selectedCategories.includes(item.name)) || [];
+  const filteredProductsByCategory = analytics?.productsByCategory.filter((item) => selectedCategories.includes(item.category)) || [];
+  const filteredPriceRangeByCategory = analytics?.priceRangeByCategory.filter((item) => selectedCategories.includes(item.category)) || [];
+
   return (
     <div className="p-4">
       <h1 className="text-3xl font-bold mb-6">Product Analytics Dashboard</h1>
@@ -86,104 +98,115 @@ export default function ProductAnalyticsDashboard() {
         <div className="text-center text-lg font-semibold mb-10">Loading analysis...</div>
       ) : analytics && (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div className="border rounded-lg bg-white p-4 shadow-sm">
-              <h3 className="font-semibold text-lg mb-2">Total Products</h3>
-              <p className="text-4xl font-bold">{analytics.totalProducts ?? 0}</p>
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
+            {/* Category Filter Dropdown (left side) */}
+            <div className="lg:col-span-1 border rounded-lg bg-white p-4 shadow-sm h-full">
+              <h3 className="font-semibold text-lg mb-2">Select Categories</h3>
+              <select
+                multiple
+                value={selectedCategories}
+                onChange={(e) => handleCategorySelection(Array.from(e.target.selectedOptions, option => option.value))}
+                className="w-full p-2 border rounded-lg resize-y overflow-y-auto"
+                style={{ maxHeight: '300px' }}  // Controls max height and allows scrolling if needed
+              >
+                {allCategories.map((category) => (
+                  <option key={category} value={category}>{category}</option>
+                ))}
+              </select>
             </div>
-            <div className="border rounded-lg bg-white p-4 shadow-sm">
-              <h3 className="font-semibold text-lg mb-2">Total Items Sold</h3>
-              <p className="text-4xl font-bold">{analytics.totalSales ?? 0}</p>
-            </div>
-            <div className="border rounded-lg bg-white p-4 shadow-sm">
-              <h3 className="font-semibold text-lg mb-2">Avg. Rating</h3>
-              <p className="text-4xl font-bold">{(analytics.avgRating ?? 0).toFixed(1)}</p>
-            </div>
-          </div>
 
-          {/* Charts */}
+            {/* Charts (right side) */}
+            <div className="lg:col-span-3 space-y-8">
+              {/* Total Products, Total Sales, Avg Rating */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="border rounded-lg bg-white p-4 shadow-sm">
+                  <h3 className="font-semibold text-lg mb-2">Total Products</h3>
+                  <p className="text-4xl font-bold">{analytics.totalProducts ?? 0}</p>
+                </div>
+                <div className="border rounded-lg bg-white p-4 shadow-sm">
+                  <h3 className="font-semibold text-lg mb-2">Total Items Sold</h3>
+                  <p className="text-4xl font-bold">{analytics.totalSales ?? 0}</p>
+                </div>
+                <div className="border rounded-lg bg-white p-4 shadow-sm">
+                  <h3 className="font-semibold text-lg mb-2">Avg. Rating</h3>
+                  <p className="text-4xl font-bold">{(analytics.avgRating ?? 0).toFixed(1)}</p>
+                </div>
+              </div>
 
-          {/* Top Categories by Sales */}
-          <div className="border rounded-lg bg-white p-4 shadow-sm mb-8">
-            <h3 className="font-semibold text-lg mb-4">Top Categories by Sales</h3>
-            <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={analytics.salesByCategory}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" hide />
-                  <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="value" fill="#FF6384" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
+              {/* Top Categories by Sales */}
+              {selectedCategories.length > 0 && (
+                <div className="border rounded-lg bg-white p-4 shadow-sm">
+                  <h3 className="font-semibold text-lg mb-4">Top Categories by Sales</h3>
+                  <div className="h-80">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={filteredSalesByCategory}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" hide />
+                        <YAxis />
+                        <Tooltip />
+                        <Bar dataKey="value" fill="#FF6384" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              )}
 
-          {/* Product Count by Category */}
-          <div className="border rounded-lg bg-white p-4 shadow-sm mb-8">
-            <h3 className="font-semibold text-lg mb-4">Product Count by Category</h3>
-            <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={analytics.productsByCategory}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="category" hide />
-                  <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="count" fill="#36A2EB" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
+              {/* Product Count by Category */}
+              {selectedCategories.length > 0 && (
+                <div className="border rounded-lg bg-white p-4 shadow-sm">
+                  <h3 className="font-semibold text-lg mb-4">Product Count by Category</h3>
+                  <div className="h-80">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={filteredProductsByCategory}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="category" hide />
+                        <YAxis />
+                        <Tooltip />
+                        <Bar dataKey="count" fill="#36A2EB" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              )}
 
-          {/* Avg Price by Category */}
-          <div className="border rounded-lg bg-white p-4 shadow-sm mb-8">
-            <h3 className="font-semibold text-lg mb-4">Average Price by Category</h3>
-            <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={analytics.avgPriceByCategory}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="category" hide />
-                  <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="avgPrice" fill="#00C49F" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
+              {/* Min vs Max Price by Category */}
+              {selectedCategories.length > 0 && (
+                <div className="border rounded-lg bg-white p-4 shadow-sm">
+                  <h3 className="font-semibold text-lg mb-4">Price Range by Category</h3>
+                  <div className="h-80">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={filteredPriceRangeByCategory}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="category" hide />
+                        <YAxis />
+                        <Tooltip />
+                        <Legend />
+                        <Bar dataKey="minPrice" fill="#8884d8" name="Min Price" />
+                        <Bar dataKey="maxPrice" fill="#FFBB28" name="Max Price" />
+                        <Bar dataKey="avgPrice" fill="#82ca9d" name="Avg Price" /> {/* Added Avg Price */}
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              )}
 
-          {/* Min vs Max Price by Category */}
-          <div className="border rounded-lg bg-white p-4 shadow-sm mb-8">
-            <h3 className="font-semibold text-lg mb-4">Price Range by Category</h3>
-            <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={analytics.priceRangeByCategory}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="category" hide />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="minPrice" fill="#8884d8" name="Min Price" />
-                  <Bar dataKey="maxPrice" fill="#FFBB28" name="Max Price" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-
-          {/* Seller Performance */}
-          <div className="border rounded-lg bg-white p-4 shadow-sm mb-8">
-            <h3 className="font-semibold text-lg mb-4">Top Sellers</h3>
-            <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={analytics.sellerPerformance}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="seller" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="products" fill="#8884d8" name="Products Listed" />
-                  <Bar dataKey="sales" fill="#82ca9d" name="Items Sold" />
-                </BarChart>
-              </ResponsiveContainer>
+              {/* Seller Performance */}
+              <div className="border rounded-lg bg-white p-4 shadow-sm">
+                <h3 className="font-semibold text-lg mb-4">Top Sellers</h3>
+                <div className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={analytics.sellerPerformance}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="seller" />
+                      <YAxis />
+                      <Tooltip />
+                      <Legend />
+                      <Bar dataKey="products" fill="#8884d8" name="Products Listed" />
+                      <Bar dataKey="sales" fill="#82ca9d" name="Items Sold" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
             </div>
           </div>
         </>
