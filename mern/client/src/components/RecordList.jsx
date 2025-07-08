@@ -1,110 +1,281 @@
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
+} from 'recharts';
 
-const Record = (props) => (
-  <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
-    <td className="p-4 align-middle [&amp;:has([role=checkbox])]:pr-0">
-      {props.record.name}
-    </td>
-    <td className="p-4 align-middle [&amp;:has([role=checkbox])]:pr-0">
-      {props.record.position}
-    </td>
-    <td className="p-4 align-middle [&amp;:has([role=checkbox])]:pr-0">
-      {props.record.level}
-    </td>
-    <td className="p-4 align-middle [&amp;:has([role=checkbox])]:pr-0">
-      <div className="flex gap-2">
-        <Link
-          className="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-slate-100 h-9 rounded-md px-3"
-          to={`/edit/${props.record._id}`}
-        >
-          Edit
-        </Link>
-        <button
-          className="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-slate-100 hover:text-accent-foreground h-9 rounded-md px-3"
-          color="red"
-          type="button"
-          onClick={() => {
-            props.deleteRecord(props.record._id);
-          }}
-        >
-          Delete
-        </button>
-      </div>
-    </td>
-  </tr>
-);
+const safeDate = (raw) => {
+  const date = new Date(raw);
+  return isNaN(date) ? "-" : date.toLocaleDateString();
+};
 
-export default function RecordList() {
+export default function ProductAnalyticsDashboard() {
+  const [analytics, setAnalytics] = useState(null);
   const [records, setRecords] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [recordLoading, setRecordLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const recordsPerPage = 500;
 
-  // This method fetches the records from the database.
   useEffect(() => {
-    async function getRecords() {
-      const response = await fetch(`http://localhost:5050/record/`);
-      if (!response.ok) {
-        const message = `An error occurred: ${response.statusText}`;
-        console.error(message);
-        return;
+    const fetchAnalytics = async () => {
+      try {
+        const res = await fetch('http://localhost:5050/record/analytics');
+        const data = await res.json();
+        setAnalytics(data);
+      } catch (err) {
+        console.error("Failed to fetch analytics", err);
+      } finally {
+        setLoading(false);
       }
-      const records = await response.json();
-      setRecords(records);
+    };
+
+    fetchAnalytics();
+  }, []);
+
+  const fetchRecords = async () => {
+    setRecordLoading(true);
+    try {
+      const res = await fetch(`http://localhost:5050/record?page=${currentPage}&limit=${recordsPerPage}`);
+      const data = await res.json();
+      setRecords(data.records || []);
+      setTotalPages(Math.ceil((data.total || 0) / recordsPerPage));
+    } catch (err) {
+      setError("Failed to fetch records");
+    } finally {
+      setRecordLoading(false);
     }
-    getRecords();
-    return;
-  }, [records.length]);
+  };
 
-  // This method will delete a record
-  async function deleteRecord(id) {
-    await fetch(`http://localhost:5050/record/${id}`, {
-      method: "DELETE",
-    });
-    const newRecords = records.filter((el) => el._id !== id);
-    setRecords(newRecords);
-  }
+  useEffect(() => {
+    fetchRecords();
+  }, [currentPage]);
 
-  // This method will map out the records on the table
-  function recordList() {
-    return records.map((record) => {
-      return (
-        <Record
-          record={record}
-          deleteRecord={() => deleteRecord(record._id)}
-          key={record._id}
-        />
-      );
-    });
-  }
+  const deleteRecord = async (_id) => {
+    try {
+      await fetch(`http://localhost:5050/record/${_id}`, { method: "DELETE" });
+      setRecords((prev) => prev.filter((r) => r._id !== _id));
+    } catch {
+      setError("Failed to delete record");
+    }
+  };
 
-  // This following section will display the table with the records of individuals.
+  const deleteAllRecords = async () => {
+    if (!window.confirm("⚠️ Delete ALL records permanently?")) return;
+    const confirmText = prompt('Type "DELETE ALL" to confirm:');
+    if (confirmText !== "DELETE ALL") return alert("Confirmation mismatch.");
+
+    try {
+      const res = await fetch("http://localhost:5050/record", { method: "DELETE" });
+      const data = await res.json();
+      alert(data.message || "All records deleted.");
+      setRecords([]);
+      setCurrentPage(1);
+    } catch {
+      setError("Failed to delete all records");
+    }
+  };
+
   return (
-    <>
-      <h3 className="text-lg font-semibold p-4">Employee Records</h3>
-      <div className="border rounded-lg overflow-hidden">
-        <div className="relative w-full overflow-auto">
-          <table className="w-full caption-bottom text-sm">
-            <thead className="[&amp;_tr]:border-b">
-              <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
-                <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground [&amp;:has([role=checkbox])]:pr-0">
-                  Name
-                </th>
-                <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground [&amp;:has([role=checkbox])]:pr-0">
-                  Position
-                </th>
-                <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground [&amp;:has([role=checkbox])]:pr-0">
-                  Level
-                </th>
-                <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground [&amp;:has([role=checkbox])]:pr-0">
-                  Action
-                </th>
-              </tr>
-            </thead>
-            <tbody className="[&amp;_tr:last-child]:border-0">
-              {recordList()}
-            </tbody>
-          </table>
+    <div className="p-4">
+      <h1 className="text-3xl font-bold mb-6">Product Analytics Dashboard</h1>
+
+      {loading ? (
+        <div className="text-center text-lg font-semibold mb-10">Loading analysis...</div>
+      ) : analytics && (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div className="border rounded-lg bg-white p-4 shadow-sm">
+              <h3 className="font-semibold text-lg mb-2">Total Products</h3>
+              <p className="text-4xl font-bold">{analytics.totalProducts ?? 0}</p>
+            </div>
+            <div className="border rounded-lg bg-white p-4 shadow-sm">
+              <h3 className="font-semibold text-lg mb-2">Total Items Sold</h3>
+              <p className="text-4xl font-bold">{analytics.totalSales ?? 0}</p>
+            </div>
+            <div className="border rounded-lg bg-white p-4 shadow-sm">
+              <h3 className="font-semibold text-lg mb-2">Avg. Rating</h3>
+              <p className="text-4xl font-bold">{(analytics.avgRating ?? 0).toFixed(1)}</p>
+            </div>
+          </div>
+
+          {/* Charts */}
+
+          {/* Top Categories by Sales */}
+          <div className="border rounded-lg bg-white p-4 shadow-sm mb-8">
+            <h3 className="font-semibold text-lg mb-4">Top Categories by Sales</h3>
+            <div className="h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={analytics.salesByCategory}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" hide />
+                  <YAxis />
+                  <Tooltip />
+                  <Bar dataKey="value" fill="#FF6384" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Product Count by Category */}
+          <div className="border rounded-lg bg-white p-4 shadow-sm mb-8">
+            <h3 className="font-semibold text-lg mb-4">Product Count by Category</h3>
+            <div className="h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={analytics.productsByCategory}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="category" hide />
+                  <YAxis />
+                  <Tooltip />
+                  <Bar dataKey="count" fill="#36A2EB" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Avg Price by Category */}
+          <div className="border rounded-lg bg-white p-4 shadow-sm mb-8">
+            <h3 className="font-semibold text-lg mb-4">Average Price by Category</h3>
+            <div className="h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={analytics.avgPriceByCategory}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="category" hide />
+                  <YAxis />
+                  <Tooltip />
+                  <Bar dataKey="avgPrice" fill="#00C49F" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Min vs Max Price by Category */}
+          <div className="border rounded-lg bg-white p-4 shadow-sm mb-8">
+            <h3 className="font-semibold text-lg mb-4">Price Range by Category</h3>
+            <div className="h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={analytics.priceRangeByCategory}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="category" hide />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="minPrice" fill="#8884d8" name="Min Price" />
+                  <Bar dataKey="maxPrice" fill="#FFBB28" name="Max Price" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Seller Performance */}
+          <div className="border rounded-lg bg-white p-4 shadow-sm mb-8">
+            <h3 className="font-semibold text-lg mb-4">Top Sellers</h3>
+            <div className="h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={analytics.sellerPerformance}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="seller" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="products" fill="#8884d8" name="Products Listed" />
+                  <Bar dataKey="sales" fill="#82ca9d" name="Items Sold" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Record Table */}
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-2xl font-semibold">Clean Product Records</h2>
+        <div className="flex gap-2">
+          <Link to="/create" className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+            Add New
+          </Link>
+          <button onClick={deleteAllRecords} className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
+            Delete All
+          </button>
         </div>
       </div>
-    </>
+
+      {error && <div className="text-red-500 mb-4">{error}</div>}
+
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse text-sm">
+          <thead className="bg-gray-200">
+            <tr className="border-b">
+              {["Current ₱", "Original ₱", "Delivery", "Category", "Title", "Spec", "Link", "Rating", "Seller", "Sold", "Site", "Fav", "Listed", "Uploaded", "Actions"].map((h) => (
+                <th key={h} className="p-4 text-left">{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {recordLoading ? (
+              <tr><td colSpan="15" className="p-4 text-center">Loading records...</td></tr>
+            ) : records.length === 0 ? (
+              <tr><td colSpan="15" className="p-4 text-center">No records found</td></tr>
+            ) : (
+              records.map((record) => (
+                <tr key={record._id} className="border-b hover:bg-gray-100">
+                  <td className="p-4">₱{parseFloat(record.price_actual).toFixed(2)}</td>
+                  <td className="p-4">₱{parseFloat(record.price_ori).toFixed(2)}</td>
+                  <td className="p-4">{record.delivery}</td>
+                  <td className="p-4">{record.item_category_detail?.split("|").join(" > ")}</td>
+                  <td className="p-4">{record.title}</td>
+                  <td className="p-4">{record.specification}</td>
+                  <td className="p-4">
+                    <a href={record.link_ori} target="_blank" rel="noreferrer" className="text-blue-600 underline">
+                      View
+                    </a>
+                  </td>
+                  <td className="p-4">{record.item_rating}</td>
+                  <td className="p-4">{record.seller_name}</td>
+                  <td className="p-4">{record.total_sold}</td>
+                  <td className="p-4">{record.sitename}</td>
+                  <td className="p-4">{record.favorite ? "Yes" : "No"}</td>
+                  <td className="p-4">{safeDate(record.w_date)}</td>
+                  <td className="p-4">{safeDate(record.timestamp)}</td>
+                  <td className="p-4">
+                    <div className="flex gap-2">
+                      <Link to={`/edit/${record._id}`} className="border px-3 py-1 rounded hover:bg-blue-100">Edit</Link>
+                      <button
+                        onClick={() => deleteRecord(record._id)}
+                        className="border px-3 py-1 rounded text-red-600 hover:bg-red-100"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {totalPages > 1 && (
+        <div className="flex justify-between items-center mt-4">
+          <button
+            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+            disabled={currentPage === 1}
+            className="px-4 py-2 border rounded disabled:opacity-50"
+          >
+            Previous
+          </button>
+          <span>Page {currentPage} of {totalPages}</span>
+          <button
+            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+            disabled={currentPage === totalPages}
+            className="px-4 py-2 border rounded disabled:opacity-50"
+          >
+            Next
+          </button>
+        </div>
+      )}
+    </div>
   );
 }

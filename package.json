@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "reacharts": "^0.4.5"
+  }
+}

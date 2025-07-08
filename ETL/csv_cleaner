@@ -1,0 +1,72 @@
+const fs = require('fs');
+const path = require('path');
+const { parse } = require('csv-parse/sync');
+const { stringify } = require('csv-stringify/sync');
+
+const inputFile = path.join(__dirname, 'csvRaw.csv');
+const outputFile = path.join(__dirname, 'cleaned_output.csv');
+
+// Read raw CSV
+const rawCsv = fs.readFileSync(inputFile, 'utf8');
+const records = parse(rawCsv, {
+  columns: true,
+  skip_empty_lines: true
+});
+
+// Fields to remove completely
+const columnsToRemove = ['idElastic', 'idHash', 'id', 'pict_link'];
+
+// Column renames
+const columnRenames = {
+  price_ori: 'original_price',
+  price_actual: 'current_price',
+  w_date: 'listing_date',
+  item_category_detail: 'category',
+  link_ori: 'product_url',
+  item_rating: 'rating',
+  seller_name: 'seller'
+};
+
+// Desired column order (after renaming)
+const orderedColumns = [
+  'current_price',
+  'original_price',
+  'delivery',
+  'category',
+  'title',
+  'specification',
+  'product_url',
+  'rating',
+  'seller',
+  'total_sold',
+  'sitename',
+  'favorite',
+  'listing_date',
+  'timestamp'
+];
+
+// Process and clean records
+const cleanedRecords = records.map(row => {
+  const newRow = {};
+  for (const key in row) {
+    if (!columnsToRemove.includes(key)) {
+      const newKey = columnRenames[key] || key;
+      newRow[newKey] = row[key];
+    }
+  }
+
+  // Ensure all fields in order, fill missing with empty string
+  const orderedRow = {};
+  for (const col of orderedColumns) {
+    orderedRow[col] = newRow[col] || '';
+  }
+  return orderedRow;
+});
+
+// Convert back to CSV
+const outputCsv = stringify(cleanedRecords, { header: true, columns: orderedColumns });
+
+// Write output file
+fs.writeFileSync(outputFile, outputCsv);
+
+console.log('Cleaned and reordered file written to:', outputFile);
