@@ -115,7 +115,6 @@ export default function ProductAnalyticsDashboard() {
               </select>
             </div>
 
-            {/* Charts (right side) */}
             <div className="lg:col-span-3 space-y-8">
               {/* Total Products, Total Sales, Avg Rating */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -183,7 +182,6 @@ export default function ProductAnalyticsDashboard() {
                         <Legend />
                         <Bar dataKey="minPrice" fill="#8884d8" name="Min Price" />
                         <Bar dataKey="maxPrice" fill="#FFBB28" name="Max Price" />
-                        <Bar dataKey="avgPrice" fill="#82ca9d" name="Avg Price" /> {/* Added Avg Price */}
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
