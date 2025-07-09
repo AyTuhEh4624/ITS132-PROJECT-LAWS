@@ -107,7 +107,7 @@ export default function ProductAnalyticsDashboard() {
                 value={selectedCategories}
                 onChange={(e) => handleCategorySelection(Array.from(e.target.selectedOptions, option => option.value))}
                 className="w-full p-2 border rounded-lg resize-y overflow-y-auto"
-                style={{ maxHeight: '300px' }}  // Controls max height and allows scrolling if needed
+                style={{ maxHeight: '800px' }}  // Controls max height and allows scrolling if needed
               >
                 {allCategories.map((category) => (
                   <option key={category} value={category}>{category}</option>
